@@ -24,7 +24,7 @@ señal_band = bandpass.aplicar(signal)
 def dibujar(original, filtrada, titulo):
     plt.figure(figsize=(8, 5))
     plt.plot(t, original, label="original")
-    plt.plot(t, filtrada, label="filtered")
+    plt.plot(t, filtrada, label="filtrada")
     plt.title(titulo)
     plt.xlabel("Tiempo (s)")
     plt.ylabel("Amplitud")
