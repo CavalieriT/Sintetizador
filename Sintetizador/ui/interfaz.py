@@ -6,6 +6,8 @@ import sounddevice as sd
 from audio.oscilador import Oscilador
 from audio.interacciones import ninguna, fm, ring_mod, sync
 from audio.notas import nota_a_frecuencia
+from audio.filtros import Filtro
+
 from ui.controles import crear_controles_osciladores, crear_controles_interaccion
 from ui.teclado import crear_teclado
 from ui.visualizadores import crear_visualizadores
@@ -44,6 +46,18 @@ class SintetizadorApp(tk.Tk):
 
         self.fm_index = tk.DoubleVar(value=5.0)
         self.preset = tk.StringVar(value="Init")
+
+        self.filtro_activo = tk.BooleanVar(value=False)
+        self.tipo_filtro = tk.StringVar(value="lowpass")
+        self.cutoff_filtro = tk.DoubleVar(value=1000.0)
+        self.bandwidth_filtro = tk.DoubleVar(value=500.0)
+
+        self.filtro = Filtro(
+            tipo=self.tipo_filtro.get(),
+            cutoff=self.cutoff_filtro.get(),
+            sample_rate=self.sample_rate,
+            bandwidth=self.bandwidth_filtro.get()
+        )
 
         self.left_frame = ttk.Frame(self)
         self.left_frame.pack(side="left", fill="y", padx=10, pady=10)
@@ -143,6 +157,13 @@ class SintetizadorApp(tk.Tk):
         else:
             onda_comb_vis = osc1_loc.generar(self.duracion_visual)
 
+        self.filtro.set_tipo(self.tipo_filtro.get())
+        self.filtro.set_cutoff(self.cutoff_filtro.get())
+        self.filtro.set_bandwidth(self.bandwidth_filtro.get())
+
+        if self.filtro_activo.get():
+            onda_comb_vis = self.filtro.aplicar(onda_comb_vis)
+
         onda1_vis = osc1_loc.generar(self.duracion_visual)
         onda2_vis = osc2_loc.generar(self.duracion_visual)
         tiempo = np.arange(len(onda1_vis)) / self.sample_rate
@@ -191,6 +212,13 @@ class SintetizadorApp(tk.Tk):
         else:
             onda_play = osc1_loc.generar(self.duracion_audio)
 
+        self.filtro.set_tipo(self.tipo_filtro.get())
+        self.filtro.set_cutoff(self.cutoff_filtro.get())
+        self.filtro.set_bandwidth(self.bandwidth_filtro.get())
+
+        if self.filtro_activo.get():
+            onda_play = self.filtro.aplicar(onda_play)
+
         max_abs = np.max(np.abs(onda_play)) if onda_play.size else 0.0
         onda_norm = (onda_play / max_abs) if max_abs > 0 else onda_play
         sd.play(onda_norm, self.sample_rate)
@@ -213,6 +241,10 @@ class SintetizadorApp(tk.Tk):
         self.osc2.set_unison(self.unison2.get())
         self.osc2.set_detune(self.detune2.get())
 
+        self.filtro.set_tipo(self.tipo_filtro.get())
+        self.filtro.set_cutoff(self.cutoff_filtro.get())
+        self.filtro.set_bandwidth(self.bandwidth_filtro.get())
+
         onda1 = self.osc1.generar(self.duracion_visual)
         onda2 = self.osc2.generar(self.duracion_visual)
 
@@ -227,6 +259,9 @@ class SintetizadorApp(tk.Tk):
         else:
             onda_comb = onda1
 
+        if self.filtro_activo.get():
+            onda_comb = self.filtro.aplicar(onda_comb)
+
         if self.interaccion.get() == "ninguna":
             self.onda_comb = ninguna(self.osc1, self.osc2, self.duracion_audio)
         elif self.interaccion.get() == "fm":
@@ -237,6 +272,9 @@ class SintetizadorApp(tk.Tk):
             self.onda_comb = sync(self.osc1, self.osc2, self.duracion_audio)
         else:
             self.onda_comb = self.osc1.generar(self.duracion_audio)
+
+        if self.filtro_activo.get():
+            self.onda_comb = self.filtro.aplicar(self.onda_comb)
         
         tiempo = np.arange(len(onda1)) / self.sample_rate
 
