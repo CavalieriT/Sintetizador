@@ -223,3 +223,82 @@ Consejo: empieza con Ninguna, luego prueba FM con índice bajo y sube poco a poc
     fm_knob = Knob(frame, min_val=0.0, max_val=20.0, initial=fm_index.get(), size=44, callback=fm_cb)
     fm_knob.grid(row=1, column=1, padx=6, sticky="w", pady=(0,6))
     tooltip_fm = Tooltip(fm_knob, lambda: f"FM Index: {fm_index.get():.1f}")
+
+
+def crear_controles_filtrado(parent,filtro_activo,tipo_filtro,cutoff_filtro,bandwidth_filtro,update_callback):
+    """
+    Crea los controles gráficos del módulo de filtrado.
+    """
+    texto_ayuda = """El módulo de filtrado modifica el contenido espectral de la señal.
+
+• Activar filtro: aplica o desactiva el filtrado.
+• Tipo: selecciona paso bajo, paso alto o paso banda.
+• Cutoff: frecuencia de corte del filtro.
+• Bandwidth: ancho de banda usado en el filtro paso banda.
+
+El filtro se aplica después de generar o combinar los osciladores."""
+
+    frame, _ = crear_labelframe_con_ayuda(parent, "Filtro", texto_ayuda)
+    frame.pack(fill="x", pady=4)
+
+    activar_check = ttk.Checkbutton(frame,text="Activar filtro",variable=filtro_activo,command=update_callback)
+    activar_check.grid(row=0, column=0, columnspan=2, sticky="w", padx=6, pady=4)
+
+    ttk.Label(frame, text="Tipo").grid(row=1, column=0, sticky="w", padx=6, pady=4)
+    tipo_combo = ttk.Combobox(frame,textvariable=tipo_filtro,values=["lowpass", "highpass", "bandpass"],width=12,state="readonly")
+    tipo_combo.grid(row=1, column=1, sticky="ew", padx=6, pady=4)
+    tipo_combo.bind("<<ComboboxSelected>>", lambda _e: update_callback())
+
+    ttk.Label(frame, text="Cutoff (Hz)").grid(row=2, column=0, sticky="w", padx=6, pady=4)
+    cutoff_scale = ttk.Scale(frame,from_=20.0,to=5000.0,orient="horizontal",variable=cutoff_filtro,command=lambda _v: update_callback())
+    cutoff_scale.grid(row=2, column=1, sticky="ew", padx=6, pady=4)
+
+    ttk.Label(frame, text="Bandwidth").grid(row=3, column=0, sticky="w", padx=6, pady=4)
+    bandwidth_scale = ttk.Scale(frame,from_=50.0,to=3000.0,orient="horizontal",variable=bandwidth_filtro,command=lambda _v: update_callback())
+    bandwidth_scale.grid(row=3, column=1, sticky="ew", padx=6, pady=4)
+
+    frame.grid_columnconfigure(1, weight=1)
+
+
+def crear_controles_amplificacion(parent,nivel_osc1,nivel_osc2,ganancia,master,normalizar,saturacion,update_callback):
+    """
+    Crea los controles gráficos del módulo de amplificación y mezcla.
+    """
+    texto_ayuda = """El módulo de amplificación controla la mezcla y el nivel final de la señal.
+
+• Nivel Osc 1: volumen del oscilador 1 dentro del mezclador.
+• Nivel Osc 2: volumen del oscilador 2 dentro del mezclador.
+• Ganancia: amplificación antes de la salida final.
+• Master: volumen final de salida.
+• Normalizar: evita que la señal supere los valores dentro del rango seguro.
+• Saturación suave: aplica una distorsión suave usando tanh (tangente hiperbólica).
+
+El mezclador decide cuánto pasa de cada oscilador.
+El amplificador decide cómo sale la señal final."""
+
+    frame, _ = crear_labelframe_con_ayuda(parent, "Amplificación y Mezcla", texto_ayuda)
+    frame.pack(fill="x", pady=4)
+
+    ttk.Label(frame, text="Nivel Osc 1").grid(row=0, column=0, sticky="w", padx=6, pady=4)
+    nivel1_scale = ttk.Scale(frame,from_=0.0,to=1.5,orient="horizontal",variable=nivel_osc1,command=lambda _v: update_callback())
+    nivel1_scale.grid(row=0, column=1, padx=6, pady=4, sticky="ew")
+
+    ttk.Label(frame, text="Nivel Osc 2").grid(row=1, column=0, sticky="w", padx=6, pady=4)
+    nivel2_scale = ttk.Scale(frame,from_=0.0,to=1.5,orient="horizontal",variable=nivel_osc2,command=lambda _v: update_callback())
+    nivel2_scale.grid(row=1, column=1, padx=6, pady=4, sticky="ew")
+
+    ttk.Label(frame, text="Ganancia").grid(row=2, column=0, sticky="w", padx=6, pady=4)
+    ganancia_scale = ttk.Scale(frame,from_=0.0,to=3.0,orient="horizontal",variable=ganancia,command=lambda _v: update_callback())
+    ganancia_scale.grid(row=2, column=1, padx=6, pady=4, sticky="ew")
+
+    ttk.Label(frame, text="Master").grid(row=3, column=0, sticky="w", padx=6, pady=4)
+    master_scale = ttk.Scale(frame,from_=0.0,to=1.0,orient="horizontal",variable=master,command=lambda _v: update_callback())
+    master_scale.grid(row=3, column=1, padx=6, pady=4, sticky="ew")
+
+    normalizar_check = ttk.Checkbutton(frame,text="Normalizar",variable=normalizar,command=update_callback)
+    normalizar_check.grid(row=4, column=0, padx=6, pady=4, sticky="w")
+
+    saturacion_check = ttk.Checkbutton(frame,text="Saturación suave",variable=saturacion,command=update_callback)
+    saturacion_check.grid(row=4, column=1, padx=6, pady=4, sticky="w")
+
+    frame.grid_columnconfigure(1, weight=1)

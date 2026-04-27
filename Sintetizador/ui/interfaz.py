@@ -8,7 +8,10 @@ from audio.interacciones import ninguna, fm, ring_mod, sync
 from audio.notas import nota_a_frecuencia
 from audio.filtros import Filtro
 
-from ui.controles import crear_controles_osciladores, crear_controles_interaccion
+from audio.amplificador import Mezclador, Amplificador
+
+from ui.controles import (crear_controles_osciladores, crear_controles_interaccion,
+                          crear_controles_amplificacion, crear_controles_filtrado)
 from ui.teclado import crear_teclado
 from ui.visualizadores import crear_visualizadores
 from ui.widgets import Tooltip, crear_labelframe_con_ayuda
@@ -59,6 +62,18 @@ class SintetizadorApp(tk.Tk):
             bandwidth=self.bandwidth_filtro.get()
         )
 
+        self.nivel_osc1 = tk.DoubleVar(value=1.0)
+        self.nivel_osc2 = tk.DoubleVar(value=1.0)
+        self.ganancia = tk.DoubleVar(value=1.0)
+        self.volumen_master = tk.DoubleVar(value=0.8)
+        self.normalizar = tk.BooleanVar(value=True)
+        self.saturacion = tk.BooleanVar(value=False)
+
+        self.mezclador = Mezclador(nivel_osc1=self.nivel_osc1.get(), nivel_osc2=self.nivel_osc2.get())
+
+        self.amplificador = Amplificador(ganancia= self.ganancia.get(), master=self.volumen_master.get(),
+                                        normalizar=self.normalizar.get(), saturacion=self.saturacion.get())
+
         self.left_frame = ttk.Frame(self)
         self.left_frame.pack(side="left", fill="y", padx=10, pady=10)
 
@@ -67,6 +82,12 @@ class SintetizadorApp(tk.Tk):
                                      lambda: self.after_idle(self.actualizar_onda))
         crear_controles_interaccion(self.left_frame, self.interaccion, self.fm_index,
                                      lambda: self.after_idle(self.actualizar_onda))
+        crear_controles_filtrado(self.left_frame, self.filtro_activo, self.tipo_filtro,
+                                 self.cutoff_filtro, self.bandwidth_filtro,
+                                 lambda: self.after_idle(self.actualizar_onda))
+        crear_controles_amplificacion(self.left_frame, self.nivel_osc1, self.nivel_osc2, self.ganancia,
+                                      self.volumen_master, self.normalizar, self.saturacion,
+                                      lambda: self.after_idle(self.actualizar_onda))
         self.crear_botones(self.left_frame)
 
         self.key_map = {}
@@ -145,9 +166,19 @@ class SintetizadorApp(tk.Tk):
         osc2_loc = Oscilador(frecuencia=self.freq2.get(), amplitud=self.amp2.get(), forma=self.forma2.get(),
                              fase=getattr(self.osc2, 'fase', 0.0), sample_rate=self.sample_rate,
                              unison=self.unison2.get(), detune_cents=self.detune2.get())
+        
+        self.mezclador.set_nivel_osc1(self.nivel_osc1.get())
+        self.mezclador.set_nivel_osc2(self.nivel_osc2.get())
+
+        self.amplificador.set_ganancia(self.ganancia.get())
+        self.amplificador.set_master(self.volumen_master.get())
+        self.amplificador.set_normalizar(self.normalizar.get())
+        self.amplificador.set_saturacion(self.saturacion.get())
 
         if self.interaccion.get() == "ninguna":
-            onda_comb_vis = ninguna(osc1_loc, osc2_loc, self.duracion_visual)
+            onda1_vis = osc1_loc.generar(self.duracion_visual)
+            onda2_vis = osc2_loc.generar(self.duracion_visual)
+            onda_comb_vis = self.mezclador.mezclar(onda1_vis, onda2_vis)
         elif self.interaccion.get() == "fm":
             onda_comb_vis = fm(osc1_loc, osc2_loc, self.duracion_visual, indice=self.fm_index.get())
         elif self.interaccion.get() == "ring_mod":
@@ -163,6 +194,8 @@ class SintetizadorApp(tk.Tk):
 
         if self.filtro_activo.get():
             onda_comb_vis = self.filtro.aplicar(onda_comb_vis)
+
+        onda_comb_vis = self.amplificador.amplificar(onda_comb_vis)
 
         onda1_vis = osc1_loc.generar(self.duracion_visual)
         onda2_vis = osc2_loc.generar(self.duracion_visual)
@@ -202,7 +235,9 @@ class SintetizadorApp(tk.Tk):
         self.canvas3.draw()
 
         if self.interaccion.get() == "ninguna":
-            onda_play = ninguna(osc1_loc, osc2_loc, self.duracion_audio)
+            onda1_play = osc1_loc.generar(self.duracion_audio)
+            onda2_play = osc2_loc.generar(self.duracion_audio)
+            onda_play = self.mezclador.mezclar(onda1_play, onda2_play)
         elif self.interaccion.get() == "fm":
             onda_play = fm(osc1_loc, osc2_loc, self.duracion_audio, indice=self.fm_index.get())
         elif self.interaccion.get() == "ring_mod":
@@ -219,9 +254,9 @@ class SintetizadorApp(tk.Tk):
         if self.filtro_activo.get():
             onda_play = self.filtro.aplicar(onda_play)
 
-        max_abs = np.max(np.abs(onda_play)) if onda_play.size else 0.0
-        onda_norm = (onda_play / max_abs) if max_abs > 0 else onda_play
-        sd.play(onda_norm, self.sample_rate)
+        onda_play = self.amplificador.amplificar(onda_play)
+
+        sd.play(onda_play, self.sample_rate)
         sd.wait()
 
         self.osc1.set_frecuencia(f1_prev)
@@ -245,11 +280,19 @@ class SintetizadorApp(tk.Tk):
         self.filtro.set_cutoff(self.cutoff_filtro.get())
         self.filtro.set_bandwidth(self.bandwidth_filtro.get())
 
+        self.mezclador.set_nivel_osc1(self.nivel_osc1.get())
+        self.mezclador.set_nivel_osc2(self.nivel_osc2.get())
+
+        self.amplificador.set_ganancia(self.ganancia.get())
+        self.amplificador.set_master(self.volumen_master.get())
+        self.amplificador.set_normalizar(self.normalizar.get())
+        self.amplificador.set_saturacion(self.saturacion.get())
+
         onda1 = self.osc1.generar(self.duracion_visual)
         onda2 = self.osc2.generar(self.duracion_visual)
 
         if self.interaccion.get() == "ninguna":
-            onda_comb = ninguna(self.osc1, self.osc2, self.duracion_visual)
+            onda_comb = self.mezclador.mezclar(onda1, onda2)
         elif self.interaccion.get() == "fm":
             onda_comb = fm(self.osc1, self.osc2, self.duracion_visual, indice=self.fm_index.get())
         elif self.interaccion.get() == "ring_mod":
@@ -261,9 +304,14 @@ class SintetizadorApp(tk.Tk):
 
         if self.filtro_activo.get():
             onda_comb = self.filtro.aplicar(onda_comb)
+        
+        onda_comb = self.amplificador.amplificar(onda_comb)
+
+        onda1_audio = self.osc1.generar(self.duracion_audio)
+        onda2_audio = self.osc2.generar(self.duracion_audio)
 
         if self.interaccion.get() == "ninguna":
-            self.onda_comb = ninguna(self.osc1, self.osc2, self.duracion_audio)
+            self.onda_comb = self.mezclador.mezclar(onda1_audio, onda2_audio)
         elif self.interaccion.get() == "fm":
             self.onda_comb = fm(self.osc1, self.osc2, self.duracion_audio, indice=self.fm_index.get())
         elif self.interaccion.get() == "ring_mod":
@@ -275,6 +323,8 @@ class SintetizadorApp(tk.Tk):
 
         if self.filtro_activo.get():
             self.onda_comb = self.filtro.aplicar(self.onda_comb)
+
+        self.onda_comb = self.amplificador.amplificar(self.onda_comb)
         
         tiempo = np.arange(len(onda1)) / self.sample_rate
 
@@ -313,10 +363,8 @@ class SintetizadorApp(tk.Tk):
 
     def reproducir_onda(self):
         if self.onda_comb is not None:
-            max_abs = np.max(np.abs(self.onda_comb))
-            onda_norm = (self.onda_comb / max_abs) if max_abs > 0 else self.onda_comb
             print(f"Reproduciendo audio en dispositivo: {sd.default.device}")
-            sd.play(onda_norm, self.sample_rate)
+            sd.play(self.onda_comb, self.sample_rate)
             sd.wait()
 
     def on_closing(self):

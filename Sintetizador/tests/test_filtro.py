@@ -1,6 +1,8 @@
+#runnear con python -m tests.test_filtro
+
 import numpy as np
 import matplotlib.pyplot as plt
-from filtros import Filtro
+from audio.filtros import Filtro
 
 fs = 44100
 duracion = 0.01
