@@ -15,7 +15,7 @@ def crear_visualizadores(parent):
     fig1.subplots_adjust(bottom=0.18, top=0.85)
     canvas1 = FigureCanvasTkAgg(fig1, master=parent)
     w1 = canvas1.get_tk_widget()
-    w1.place(x=450, y=20, width=350, height=180)
+    w1.place(x=770, y=30, width=350, height=180)
     canvas1.draw()
 
     fig2, ax2 = plt.subplots(figsize=(5, 2))
@@ -26,7 +26,7 @@ def crear_visualizadores(parent):
     fig2.subplots_adjust(bottom=0.18, top=0.85)
     canvas2 = FigureCanvasTkAgg(fig2, master=parent)
     w2 = canvas2.get_tk_widget()
-    w2.place(x=450, y=220, width=350, height=180)
+    w2.place(x=770, y=235, width=350, height=180)
     canvas2.draw()
 
     fig3, ax3 = plt.subplots(figsize=(5, 2))
@@ -37,7 +37,7 @@ def crear_visualizadores(parent):
     fig3.subplots_adjust(bottom=0.18, top=0.85)
     canvas3 = FigureCanvasTkAgg(fig3, master=parent)
     w3 = canvas3.get_tk_widget()
-    w3.place(x=820, y=20, width=390, height=380)
+    w3.place(x=1135, y=30, width=350, height=385)
     canvas3.draw()
 
     return fig1, ax1, canvas1, fig2, ax2, canvas2, fig3, ax3, canvas3

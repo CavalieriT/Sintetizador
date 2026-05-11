@@ -81,29 +81,50 @@ class Filtro:
     
     def _bandpass(self, señal, lowcut, highcut):
         """
-        Aplica filtro pasabanda a la señal. Primero highpass y luego lowpass.
+        Aplica filtro pasabanda IIR de segundo orden de tipo biquad a la señal.
         """
+        if señal is None or len(señal) == 0:
+            return señal
 
-        dt = 1 / self.sample_rate
+        fc = (lowcut + highcut) / 2
+        bandwidth = highcut - lowcut
 
-        rc_low = 1 / (2 * np.pi * lowcut)
-        alpha_low = rc_low / (rc_low + dt)
+        q = fc / bandwidth if bandwidth > 0 else 1.0
+        q = max(0.1, q)
 
-        rc_high = 1 / (2 * np.pi * highcut)
-        alpha_high = dt / (rc_high + dt)
+        w0 = 2 * np.pi * fc / self.sample_rate
+        alpha = np.sin(w0) / (2 * q)
 
-        hp = np.zeros_like(señal)
-        lp = np.zeros_like(señal)
+        b0 = alpha
+        b1 = 0
+        b2 = -alpha
+        a0 = 1 + alpha
+        a1 = -2 * np.cos(w0)
+        a2 = 1 - alpha
 
-        for n in range(1, len(señal)):
-            hp[n] = alpha_low * (hp[n-1] + señal[n] - señal[n-1])
+        b0 /= a0
+        b1 /= a0
+        b2 /= a0
+        a1 /= a0
+        a2 /= a0
 
-        lp[0] = hp[0]
+        output = np.zeros_like(señal, dtype=float)
 
-        for n in range(1, len(señal)):
-            lp[n] = lp[n-1] + alpha_high * (hp[n] - lp[n-1])
+        x1 = x2 = 0.0
+        y1 = y2 = 0.0
 
-        return lp
+        for n in range(len(señal)):
+            x0 = señal[n]
+            y0 = b0 * x0 + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2
+
+            output[n] = y0
+
+            x2 = x1
+            x1 = x0
+            y2 = y1
+            y1 = y0
+
+        return output
     
     def _calcula_alpha_lowpass(self, cutoff):
         """

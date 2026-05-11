@@ -22,7 +22,7 @@ class SintetizadorApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Sintetizador Didáctico")
-        self.geometry("1220x750")
+        self.geometry("1500x820")
         self.resizable(False, False)
 
         self.duracion_visual = 0.01
@@ -73,33 +73,43 @@ class SintetizadorApp(tk.Tk):
 
         self.amplificador = Amplificador(ganancia= self.ganancia.get(), master=self.volumen_master.get(),
                                         normalizar=self.normalizar.get(), saturacion=self.saturacion.get())
-
         self.left_frame = ttk.Frame(self)
-        self.left_frame.pack(side="left", fill="y", padx=10, pady=10)
+        self.left_frame.place(x=10, y=10, width=420, height=790)
 
-        crear_controles_osciladores(self.left_frame, self.freq1, self.amp1, self.forma1, self.unison1, self.detune1,
-                                     self.freq2, self.amp2, self.forma2, self.unison2, self.detune2,
-                                     lambda: self.after_idle(self.actualizar_onda))
-        crear_controles_interaccion(self.left_frame, self.interaccion, self.fm_index,
-                                     lambda: self.after_idle(self.actualizar_onda))
-        crear_controles_filtrado(self.left_frame, self.filtro_activo, self.tipo_filtro,
-                                 self.cutoff_filtro, self.bandwidth_filtro,
-                                 lambda: self.after_idle(self.actualizar_onda))
-        crear_controles_amplificacion(self.left_frame, self.nivel_osc1, self.nivel_osc2, self.ganancia,
-                                      self.volumen_master, self.normalizar, self.saturacion,
+        self.middle_frame = ttk.Frame(self)
+        self.middle_frame.place(x=445, y=10, width=300, height=790)
+
+        self.visual_frame = ttk.Frame(self)
+        self.visual_frame.place(x=760, y=10, width=730, height=790)
+
+        # columna izquierda con generación de ondas
+        crear_controles_osciladores(self.left_frame,self.freq1,self.amp1,self.forma1,self.unison1,self.detune1,
+                                    self.freq2,self.amp2,self.forma2,self.unison2,self.detune2,
+                                    lambda: self.after_idle(self.actualizar_onda))
+
+        #columna central con interacciones, amplificación y filtrado
+        crear_controles_interaccion(self.middle_frame,self.interaccion,self.fm_index,
+                                    lambda: self.after_idle(self.actualizar_onda))
+
+        crear_controles_filtrado(self.middle_frame,self.filtro_activo,self.tipo_filtro,self.cutoff_filtro,self.bandwidth_filtro,
+                                lambda: self.after_idle(self.actualizar_onda))
+
+        crear_controles_amplificacion(self.middle_frame,self.nivel_osc1,self.nivel_osc2,self.ganancia,self.volumen_master,
+                                      self.normalizar,self.saturacion,
                                       lambda: self.after_idle(self.actualizar_onda))
-        self.crear_botones(self.left_frame)
+
+        self.crear_botones(self.middle_frame)
 
         self.key_map = {}
         self.note_to_rect = {}
-        self.keyboard_canvas, self.keyboard_hbar = crear_teclado(self.left_frame, self.key_map, self.note_to_rect, self.tocar_nota)
+        self.keyboard_canvas, self.keyboard_hbar = crear_teclado(self.middle_frame,self.key_map,self.note_to_rect,self.tocar_nota)
 
-        # Crear visualizadores en el área derecha
+        # columna derecha con graficos
         self.fig1, self.ax1, self.canvas1, self.fig2, self.ax2, self.canvas2, self.fig3, self.ax3, self.canvas3 = crear_visualizadores(self)
 
-        # Logo del aplicativo en esquina inferior derecha
+        # Logo del aplicativo
         self.logo_canvas = tk.Canvas(self, width=350, height=80, bg='#2c3e50', highlightthickness=0)
-        self.logo_canvas.place(x=650, y=500)
+        self.logo_canvas.place(x=950, y=570)
         self.logo_canvas.create_line(15, 40, 25, 30, 35, 50, 45, 30, 55, 40, 65, 30, 75, 50, 85, 30, 95, 40, 
                                       fill="white", width=2, smooth=True)
         self.logo_canvas.create_text(175, 40, text="Sintetizador\nDidáctico", 
@@ -108,7 +118,6 @@ class SintetizadorApp(tk.Tk):
                                       fill="white", width=2)
         self.logo_canvas.create_rectangle(5, 5, 345, 75, outline="#34495e", width=2, fill="")
 
-        # Fuerza cálculo de geometría antes de primera actualización
         self.update_idletasks()
         self.after(60, self.actualizar_onda)
 

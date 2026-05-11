@@ -1,0 +1,75 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# parametros del sintetizador
+fs = 44100
+fc = 1500
+bandwidth = 800
+
+f = np.linspace(0, 5000, 2000)
+w = 2 * np.pi * f / fs
+z = np.exp(-1j * w)
+
+dt = 1 / fs
+
+#paso bajo
+rc_lp = 1 / (2 * np.pi * fc)
+alpha_lp = dt / (rc_lp + dt)
+
+H_lp = alpha_lp / (1 - (1 - alpha_lp) * z)
+
+# paso alto
+rc_hp = 1 / (2 * np.pi * fc)
+alpha_hp = rc_hp / (rc_hp + dt)
+
+H_hp = alpha_hp * (1 - z) / (1 - alpha_hp * z)
+
+# paso banda
+q = fc / bandwidth
+q = max(0.1, q)
+
+w0 = 2 * np.pi * fc / fs
+alpha = np.sin(w0) / (2 * q)
+
+b0 = alpha
+b1 = 0
+b2 = -alpha
+a0 = 1 + alpha
+a1 = -2 * np.cos(w0)
+a2 = 1 - alpha
+
+# normalizacion de coeficientes
+b0 /= a0
+b1 /= a0
+b2 /= a0
+a1 /= a0
+a2 /= a0
+
+# respuesta en frecuencia del filtro paso banda
+H_bp = (b0 + b1 * z + b2 * z**2) / (1 + a1 * z + a2 * z**2)
+
+#magnitudes normalizadas
+lp_mag = np.abs(H_lp)
+hp_mag = np.abs(H_hp)
+bp_mag = np.abs(H_bp)
+
+lp_mag = lp_mag / np.max(lp_mag)
+hp_mag = hp_mag / np.max(hp_mag)
+bp_mag = bp_mag / np.max(bp_mag)
+
+plt.figure(figsize=(10, 6))
+
+plt.plot(f, lp_mag, label="Paso bajo")
+plt.plot(f, hp_mag, label="Paso alto")
+plt.plot(f, bp_mag, label="Paso banda")
+
+plt.xlabel("Frecuencia (Hz)")
+plt.ylabel("Ganancia normalizada")
+plt.title("Respuesta frecuencial aproximada de los filtros implementados")
+
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+
+plt.savefig("respuesta_frecuencial_filtros_implementados.png", dpi=300, bbox_inches="tight")
+plt.show()
