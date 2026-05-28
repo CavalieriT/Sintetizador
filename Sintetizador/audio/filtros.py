@@ -30,10 +30,10 @@ class Filtro:
         """
         Aplica el filtro seleccionado a una señal de audio.
         
-        Args:
+        Parámetro:
             señal: array NumPy con muestras de audio
             
-        Returns:
+        Devuelve:
             un array NumPy filtrado
         """
 

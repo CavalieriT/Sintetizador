@@ -7,11 +7,12 @@ from audio.oscilador import Oscilador
 from audio.interacciones import ninguna, fm, ring_mod, sync
 from audio.notas import nota_a_frecuencia
 from audio.filtros import Filtro
-
 from audio.amplificador import Mezclador, Amplificador
+from audio.envolvente import GeneradorEnvolvente
 
 from ui.controles import (crear_controles_osciladores, crear_controles_interaccion,
-                          crear_controles_amplificacion, crear_controles_filtrado)
+                          crear_controles_amplificacion, crear_controles_filtrado,
+                          crear_controles_envolvente)
 from ui.teclado import crear_teclado
 from ui.visualizadores import crear_visualizadores
 from ui.widgets import Tooltip, crear_labelframe_con_ayuda
@@ -22,7 +23,7 @@ class SintetizadorApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Sintetizador Didáctico")
-        self.geometry("1500x820")
+        self.geometry("1700x950")
         self.resizable(False, False)
 
         self.duracion_visual = 0.01
@@ -71,13 +72,32 @@ class SintetizadorApp(tk.Tk):
 
         self.mezclador = Mezclador(nivel_osc1=self.nivel_osc1.get(), nivel_osc2=self.nivel_osc2.get())
 
-        self.amplificador = Amplificador(ganancia= self.ganancia.get(), master=self.volumen_master.get(),
-                                        normalizar=self.normalizar.get(), saturacion=self.saturacion.get())
+        self.amplificador = Amplificador(
+            ganancia= self.ganancia.get(),
+            master=self.volumen_master.get(),
+            normalizar=self.normalizar.get(),
+            saturacion=self.saturacion.get())
+        
+        self.tipo_envolvente = tk.StringVar(value="gate")
+        self.attack = tk.DoubleVar(value=0.05)
+        self.decay = tk.DoubleVar(value=0.15)
+        self.sustain = tk.DoubleVar(value=0.7)
+        self.release = tk.DoubleVar(value=0.2)
+
+        self.envolvente = GeneradorEnvolvente(
+            tipo=self.tipo_envolvente.get(),
+            attack=self.attack.get(),
+            decay=self.decay.get(),
+            sustain=self.sustain.get(),
+            release=self.release.get(),
+            sample_rate=self.sample_rate
+        )
+
         self.left_frame = ttk.Frame(self)
         self.left_frame.place(x=10, y=10, width=420, height=790)
 
         self.middle_frame = ttk.Frame(self)
-        self.middle_frame.place(x=445, y=10, width=300, height=790)
+        self.middle_frame.place(x=445, y=10, width=300, height=920)
 
         self.visual_frame = ttk.Frame(self)
         self.visual_frame.place(x=760, y=10, width=730, height=790)
@@ -97,6 +117,8 @@ class SintetizadorApp(tk.Tk):
         crear_controles_amplificacion(self.middle_frame,self.nivel_osc1,self.nivel_osc2,self.ganancia,self.volumen_master,
                                       self.normalizar,self.saturacion,
                                       lambda: self.after_idle(self.actualizar_onda))
+        crear_controles_envolvente(self.middle_frame,self.tipo_envolvente,self.attack,self.decay,self.sustain,self.release,
+                                   lambda: self.after_idle(self.actualizar_onda))
 
         self.crear_botones(self.middle_frame)
 
@@ -184,6 +206,12 @@ class SintetizadorApp(tk.Tk):
         self.amplificador.set_normalizar(self.normalizar.get())
         self.amplificador.set_saturacion(self.saturacion.get())
 
+        self.envolvente.set_tipo(self.tipo_envolvente.get())
+        self.envolvente.set_attack(self.attack.get())
+        self.envolvente.set_decay(self.decay.get())
+        self.envolvente.set_sustain(self.sustain.get())
+        self.envolvente.set_release(self.release.get())
+
         if self.interaccion.get() == "ninguna":
             onda1_vis = osc1_loc.generar(self.duracion_visual)
             onda2_vis = osc2_loc.generar(self.duracion_visual)
@@ -204,6 +232,7 @@ class SintetizadorApp(tk.Tk):
         if self.filtro_activo.get():
             onda_comb_vis = self.filtro.aplicar(onda_comb_vis)
 
+        onda_comb_vis = self.envolvente.aplicar(onda_comb_vis)
         onda_comb_vis = self.amplificador.amplificar(onda_comb_vis)
 
         onda1_vis = osc1_loc.generar(self.duracion_visual)
@@ -263,6 +292,7 @@ class SintetizadorApp(tk.Tk):
         if self.filtro_activo.get():
             onda_play = self.filtro.aplicar(onda_play)
 
+        onda_play = self.envolvente.aplicar(onda_play)
         onda_play = self.amplificador.amplificar(onda_play)
 
         sd.play(onda_play, self.sample_rate)
@@ -297,6 +327,12 @@ class SintetizadorApp(tk.Tk):
         self.amplificador.set_normalizar(self.normalizar.get())
         self.amplificador.set_saturacion(self.saturacion.get())
 
+        self.envolvente.set_tipo(self.tipo_envolvente.get())
+        self.envolvente.set_attack(self.attack.get())
+        self.envolvente.set_decay(self.decay.get())
+        self.envolvente.set_sustain(self.sustain.get())
+        self.envolvente.set_release(self.release.get())
+
         onda1 = self.osc1.generar(self.duracion_visual)
         onda2 = self.osc2.generar(self.duracion_visual)
 
@@ -314,6 +350,7 @@ class SintetizadorApp(tk.Tk):
         if self.filtro_activo.get():
             onda_comb = self.filtro.aplicar(onda_comb)
         
+        onda_comb = self.envolvente.aplicar(onda_comb)
         onda_comb = self.amplificador.amplificar(onda_comb)
 
         onda1_audio = self.osc1.generar(self.duracion_audio)
@@ -333,6 +370,7 @@ class SintetizadorApp(tk.Tk):
         if self.filtro_activo.get():
             self.onda_comb = self.filtro.aplicar(self.onda_comb)
 
+        self.onda_comb = self.envolvente.aplicar(self.onda_comb)
         self.onda_comb = self.amplificador.amplificar(self.onda_comb)
         
         tiempo = np.arange(len(onda1)) / self.sample_rate

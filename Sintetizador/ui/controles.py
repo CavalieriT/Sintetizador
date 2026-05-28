@@ -302,3 +302,50 @@ El amplificador decide cómo sale la señal final."""
     saturacion_check.grid(row=4, column=1, padx=6, pady=4, sticky="w")
 
     frame.grid_columnconfigure(1, weight=1)
+
+def crear_controles_envolvente(parent, tipo_envolvente, attack, decay, sustain, release, update_callback):
+    """
+    Crea los controles gráficos del generador de envolvente.
+    """
+    texto_ayuda = """El generador de envolvente controla cómo evoluciona la amplitud del sonido en el tiempo.
+
+    • Gate: mantiene el sonido constante mientras dura la nota.
+    • AD: sube hasta un máximo y luego decae hasta cero.
+    • ADSR: permite controlar Attack, Decay, Sustain y Release.
+
+    Attack: tiempo que tarda el sonido en llegar al máximo.
+    Decay: tiempo que tarda en bajar desde el máximo hasta el nivel de sustain.
+    Sustain: nivel que se mantiene mientras la nota esté activa.
+    Release: tiempo que tarda el sonido en finalmente desaparecer."""
+
+    frame, _ = crear_labelframe_con_ayuda(parent, "Envolvente", texto_ayuda)
+    frame.pack(fill="x", pady=4)
+
+    ttk.Label(frame, text="Tipo").grid(row=0, column=0, sticky="w", padx=6, pady=4)
+    combo = ttk.Combobox(
+        frame,
+        textvariable=tipo_envolvente,
+        values=["gate", "ad", "adsr"],
+        width=12,
+        state="readonly"
+    )
+    combo.grid(row=0, column=1, sticky="ew", padx=6, pady=4)
+    combo.bind("<<ComboboxSelected>>", lambda _e: update_callback())
+
+    ttk.Label(frame, text="Attack").grid(row=1, column=0, sticky="w", padx=6, pady=4)
+    ttk.Scale(frame, from_=0.001, to=1.0, orient="horizontal",
+              variable=attack, command=lambda _v: update_callback()).grid(row=1, column=1, sticky="ew", padx=6)
+
+    ttk.Label(frame, text="Decay").grid(row=2, column=0, sticky="w", padx=6, pady=4)
+    ttk.Scale(frame, from_=0.001, to=1.0, orient="horizontal",
+              variable=decay, command=lambda _v: update_callback()).grid(row=2, column=1, sticky="ew", padx=6)
+
+    ttk.Label(frame, text="Sustain").grid(row=3, column=0, sticky="w", padx=6, pady=4)
+    ttk.Scale(frame, from_=0.0, to=1.0, orient="horizontal",
+              variable=sustain, command=lambda _v: update_callback()).grid(row=3, column=1, sticky="ew", padx=6)
+
+    ttk.Label(frame, text="Release").grid(row=4, column=0, sticky="w", padx=6, pady=4)
+    ttk.Scale(frame, from_=0.001, to=1.0, orient="horizontal",
+              variable=release, command=lambda _v: update_callback()).grid(row=4, column=1, sticky="ew", padx=6)
+
+    frame.grid_columnconfigure(1, weight=1)
