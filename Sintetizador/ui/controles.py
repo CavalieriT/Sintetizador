@@ -233,6 +233,15 @@ def crear_controles_filtrado(parent,filtro_activo,tipo_filtro,cutoff_filtro,band
 
 • Activar filtro: aplica o desactiva el filtrado.
 • Tipo: selecciona paso bajo, paso alto o paso banda.
+    • Lowpass (paso bajo):
+    Atenúa frecuencias altas.
+    Produce sonidos más suaves y cálidos.
+    • Highpass (paso alto):
+    Atenúa frecuencias bajas.
+    Produce sonidos más brillantes y metálicos.
+    • Bandpass (paso banda):
+    Conserva únicamente un rango de frecuencias.
+    Produce sonidos más enfocados y resonantes.
 • Cutoff: frecuencia de corte del filtro.
 • Bandwidth: ancho de banda usado en el filtro paso banda.
 
