@@ -253,9 +253,15 @@ El filtro se aplica después de generar o combinar los osciladores."""
     cutoff_scale = ttk.Scale(frame,from_=20.0,to=5000.0,orient="horizontal",variable=cutoff_filtro,command=lambda _v: update_callback())
     cutoff_scale.grid(row=2, column=1, sticky="ew", padx=6, pady=4)
 
+    cutoff_entry = crear_entry_parametro(frame,cutoff_filtro,cutoff_scale,20.0,5000.0,"{:.1f}",update_callback)
+    cutoff_entry.grid(row=2, column=2, padx=6, pady=4)
+
     ttk.Label(frame, text="Bandwidth").grid(row=3, column=0, sticky="w", padx=6, pady=4)
     bandwidth_scale = ttk.Scale(frame,from_=50.0,to=3000.0,orient="horizontal",variable=bandwidth_filtro,command=lambda _v: update_callback())
     bandwidth_scale.grid(row=3, column=1, sticky="ew", padx=6, pady=4)
+
+    bandwidth_entry = crear_entry_parametro(frame,bandwidth_filtro,bandwidth_scale,50.0,3000.0,"{:.1f}",update_callback)
+    bandwidth_entry.grid(row=3, column=2, padx=6, pady=4)
 
     frame.grid_columnconfigure(1, weight=1)
 
@@ -282,18 +288,23 @@ El amplificador decide cómo sale la señal final."""
     ttk.Label(frame, text="Nivel Osc 1").grid(row=0, column=0, sticky="w", padx=6, pady=4)
     nivel1_scale = ttk.Scale(frame,from_=0.0,to=1.5,orient="horizontal",variable=nivel_osc1,command=lambda _v: update_callback())
     nivel1_scale.grid(row=0, column=1, padx=6, pady=4, sticky="ew")
+    crear_entry_parametro(frame, nivel_osc1, nivel1_scale, 0.0, 1.5, "{:.2f}", update_callback).grid(row=0, column=2, padx=6, pady=4)
+
 
     ttk.Label(frame, text="Nivel Osc 2").grid(row=1, column=0, sticky="w", padx=6, pady=4)
     nivel2_scale = ttk.Scale(frame,from_=0.0,to=1.5,orient="horizontal",variable=nivel_osc2,command=lambda _v: update_callback())
     nivel2_scale.grid(row=1, column=1, padx=6, pady=4, sticky="ew")
+    crear_entry_parametro(frame, nivel_osc2, nivel2_scale, 0.0, 1.5, "{:.2f}", update_callback).grid(row=1, column=2, padx=6, pady=4)
 
     ttk.Label(frame, text="Ganancia").grid(row=2, column=0, sticky="w", padx=6, pady=4)
     ganancia_scale = ttk.Scale(frame,from_=0.0,to=3.0,orient="horizontal",variable=ganancia,command=lambda _v: update_callback())
     ganancia_scale.grid(row=2, column=1, padx=6, pady=4, sticky="ew")
+    crear_entry_parametro(frame, ganancia, ganancia_scale, 0.0, 3.0, "{:.2f}", update_callback).grid(row=2, column=2, padx=6, pady=4)
 
     ttk.Label(frame, text="Master").grid(row=3, column=0, sticky="w", padx=6, pady=4)
     master_scale = ttk.Scale(frame,from_=0.0,to=1.0,orient="horizontal",variable=master,command=lambda _v: update_callback())
     master_scale.grid(row=3, column=1, padx=6, pady=4, sticky="ew")
+    crear_entry_parametro(frame, master, master_scale, 0.0, 1.0, "{:.2f}", update_callback).grid(row=3, column=2, padx=6, pady=4)
 
     normalizar_check = ttk.Checkbutton(frame,text="Normalizar",variable=normalizar,command=update_callback)
     normalizar_check.grid(row=4, column=0, padx=6, pady=4, sticky="w")
@@ -333,19 +344,61 @@ def crear_controles_envolvente(parent, tipo_envolvente, attack, decay, sustain, 
     combo.bind("<<ComboboxSelected>>", lambda _e: update_callback())
 
     ttk.Label(frame, text="Attack").grid(row=1, column=0, sticky="w", padx=6, pady=4)
-    ttk.Scale(frame, from_=0.001, to=1.0, orient="horizontal",
-              variable=attack, command=lambda _v: update_callback()).grid(row=1, column=1, sticky="ew", padx=6)
+    attack_scale = ttk.Scale(frame, from_=0.001, to=1.0, orient="horizontal",variable=attack, command=lambda _v: update_callback())
+    attack_scale.grid(row=1, column=1, sticky="ew", padx=6, pady=4)
+    crear_entry_parametro(frame, attack, attack_scale, 0.001, 1.0, "{:.3f}", update_callback).grid(row=1, column=2, padx=6, pady=4)
 
     ttk.Label(frame, text="Decay").grid(row=2, column=0, sticky="w", padx=6, pady=4)
-    ttk.Scale(frame, from_=0.001, to=1.0, orient="horizontal",
-              variable=decay, command=lambda _v: update_callback()).grid(row=2, column=1, sticky="ew", padx=6)
+    decay_scale = ttk.Scale(frame, from_=0.001, to=1.0, orient="horizontal",variable=decay, command=lambda _v: update_callback())
+    decay_scale.grid(row=2, column=1, sticky="ew", padx=6, pady=4)
+    crear_entry_parametro(frame, decay, decay_scale, 0.001, 1.0, "{:.3f}", update_callback).grid(row=2, column=2, padx=6, pady=4)
 
     ttk.Label(frame, text="Sustain").grid(row=3, column=0, sticky="w", padx=6, pady=4)
-    ttk.Scale(frame, from_=0.0, to=1.0, orient="horizontal",
-              variable=sustain, command=lambda _v: update_callback()).grid(row=3, column=1, sticky="ew", padx=6)
+    sustain_scale = ttk.Scale(frame, from_=0.000, to=1.0, orient="horizontal",variable=sustain, command=lambda _v: update_callback())
+    sustain_scale.grid(row=3, column=1, sticky="ew", padx=6, pady=4)
+    crear_entry_parametro(frame, sustain, sustain_scale, 0.000, 1.0, "{:.2f}", update_callback).grid(row=3, column=2, padx=6, pady=4)
 
     ttk.Label(frame, text="Release").grid(row=4, column=0, sticky="w", padx=6, pady=4)
-    ttk.Scale(frame, from_=0.001, to=1.0, orient="horizontal",
-              variable=release, command=lambda _v: update_callback()).grid(row=4, column=1, sticky="ew", padx=6)
+    release_scale = ttk.Scale(frame, from_=0.001, to=1.0, orient="horizontal",variable=release, command=lambda _v: update_callback())
+    release_scale.grid(row=4, column=1, sticky="ew", padx=6, pady=4)
+    crear_entry_parametro(frame, release, release_scale, 0.001, 1.0, "{:.3f}", update_callback).grid(row=4, column=2, padx=6, pady=4)
 
     frame.grid_columnconfigure(1, weight=1)
+
+def crear_entry_parametro(parent, variable, scale_widget, minimo, maximo, formato="{:.2f}", update_callback=None):
+    """
+    Para crear un Entry editable asociado a un Scale.
+    Esto permite visualizar el valor actual y modificarlo manualmente.
+    """
+    label_var = tk.StringVar(value=formato.format(variable.get()))
+    entry = ttk.Entry(parent, textvariable=label_var, width=8, justify="center")
+
+    def actualizar_desde_slider(*_args):
+            label_var.set(formato.format(variable.get()))
+
+    def on_focus_in(_event):
+        entry.select_range(0, tk.END)
+
+    def on_focus_out(_event):
+        try:
+            valor = float(label_var.get())
+            valor = max(minimo, min(maximo, valor))
+
+            variable.set(valor)
+            scale_widget.set(valor)
+            label_var.set(formato.format(valor))
+            if update_callback:
+                update_callback()
+
+        except ValueError:
+            label_var.set(formato.format(variable.get()))
+
+    def on_return(event):
+        on_focus_out(event)
+        entry.master.focus()
+
+    variable.trace_add("write", actualizar_desde_slider)
+    entry.bind("<FocusIn>", on_focus_in)
+    entry.bind("<FocusOut>", on_focus_out)
+    entry.bind("<Return>", on_return)
+    return entry
