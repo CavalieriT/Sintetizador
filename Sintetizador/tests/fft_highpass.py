@@ -53,5 +53,4 @@ plt.legend()
 plt.grid(True)
 plt.tight_layout()
 
-plt.savefig("fft_highpass.png", dpi=300, bbox_inches="tight")
 plt.show()
